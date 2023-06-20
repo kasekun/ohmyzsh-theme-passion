@@ -5,7 +5,7 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     {
         gdate
     } || {
-        echo "\n$fg_bold[yellow]passion.zsh-theme depends on cmd [gdate] to get current time in milliseconds$reset_color"
+        echo "\n$fg_bold[yellow]passsion.zsh-theme depends on cmd [gdate] to get current time in milliseconds$reset_color"
         echo "$fg_bold[yellow][gdate] is not installed by default in macOS$reset_color"
         echo "$fg_bold[yellow]to get [gdate] by running:$reset_color"
         echo "$fg_bold[green]brew install coreutils;$reset_color";
@@ -16,15 +16,15 @@ fi
 
 # time
 function real_time() {
-    local color="%{$fg_no_bold[cyan]%}";                    # color in PROMPT need format in %{XXX%} which is not same with echo
-    local time="[$(date +%H:%M:%S)]";
+    local color="%{$fg_no_bold[white]%}";                    # color in PROMPT need format in %{XXX%} which is not same with echo
+    local time="[$(date +%H:%M)]";
     local color_reset="%{$reset_color%}";
     echo "${color}${time}${color_reset}";
 }
 
 # login_info
 function login_info() {
-    local color="%{$fg_no_bold[cyan]%}";                    # color in PROMPT need format in %{XXX%} which is not same with echo
+    local color="%{\e[1;38;5;238m%}";                    # color in PROMPT need format in %{XXX%} which is not same with echo
     local ip
     if [[ "$OSTYPE" == "linux-gnu" ]]; then
         # Linux
@@ -44,25 +44,25 @@ function login_info() {
         # Unknown.
     fi
     local color_reset="%{$reset_color%}";
-    echo "${color}[%n@${ip}]${color_reset}";
+    echo "\e[3m${color}%n@${ip}%m${color_reset}\e[0m";
 }
 
 
 # directory
 function directory() {
-    local color="%{$fg_no_bold[cyan]%}";
+    local color="%{$fg_no_bold[white]%}";
     # REF: https://stackoverflow.com/questions/25944006/bash-current-working-directory-with-replacing-path-to-home-folder
     local directory="${PWD/#$HOME/~}";
     local color_reset="%{$reset_color%}";
-    echo "${color}[${directory}]${color_reset}";
+    echo "${color}${directory}${color_reset}";
 }
 
 
 # git
-ZSH_THEME_GIT_PROMPT_PREFIX="%{$fg_no_bold[cyan]%}[";
+ZSH_THEME_GIT_PROMPT_PREFIX="%{$fg_no_bold[blue]%}(%{$fg_no_bold[red]%}";
 ZSH_THEME_GIT_PROMPT_SUFFIX="%{$reset_color%} ";
-ZSH_THEME_GIT_PROMPT_DIRTY=" %{$fg_no_bold[red]%}✖%{$fg_no_bold[cyan]%}]";
-ZSH_THEME_GIT_PROMPT_CLEAN="%{$fg_no_bold[cyan]%}]";
+ZSH_THEME_GIT_PROMPT_DIRTY="%{$fg_no_bold[blue]%}) 🔧";
+ZSH_THEME_GIT_PROMPT_CLEAN="%{$fg_no_bold[blue]%})";
 
 function update_git_status() {
     GIT_STATUS=$(git_prompt_info);
@@ -97,13 +97,13 @@ function command_status() {
 
 # output command execute after
 output_command_execute_after() {
-    if [ "$COMMAND_TIME_BEGIN" = "-20200325" ] || [ "$COMMAND_TIME_BEGIN" = "" ];
+    if [ "$COMMAND_TIME_BEIGIN" = "-20200325" ] || [ "$COMMAND_TIME_BEIGIN" = "" ];
     then
         return 1;
     fi
 
     # cmd
-    local cmd="$(fc -ln -1)";
+    local cmd="${$(fc -l | tail -1)#*  }";
     local color_cmd="";
     if $1;
     then
@@ -121,8 +121,8 @@ output_command_execute_after() {
 
     # cost
     local time_end="$(current_time_millis)";
-    local cost=$(bc -l <<<"${time_end}-${COMMAND_TIME_BEGIN}");
-    COMMAND_TIME_BEGIN="-20200325"
+    local cost=$(bc -l <<<"${time_end}-${COMMAND_TIME_BEIGIN}");
+    COMMAND_TIME_BEIGIN="-20200325"
     local length_cost=${#cost};
     if [ "$length_cost" = "4" ];
     then
@@ -139,8 +139,8 @@ output_command_execute_after() {
 
 # command execute before
 # REF: http://zsh.sourceforge.net/Doc/Release/Functions.html
-preexec() { # cspell:disable-line
-    COMMAND_TIME_BEGIN="$(current_time_millis)";
+preexec() {
+    COMMAND_TIME_BEIGIN="$(current_time_millis)";
 }
 
 current_time_millis() {
@@ -168,7 +168,7 @@ current_time_millis() {
 
 # command execute after
 # REF: http://zsh.sourceforge.net/Doc/Release/Functions.html
-precmd() { # cspell:disable-line
+precmd() {
     # last_cmd
     local last_cmd_return_code=$?;
     local last_cmd_result=true;
@@ -191,14 +191,14 @@ precmd() { # cspell:disable-line
 
 
 # set option
-setopt PROMPT_SUBST; # cspell:disable-line
+setopt PROMPT_SUBST;
 
 
 # timer
 #REF: https://stackoverflow.com/questions/26526175/zsh-menu-completion-causes-problems-after-zle-reset-prompt
 TMOUT=1;
-TRAPALRM() { # cspell:disable-line
-    # $(git_prompt_info) cost too much time which will raise stutters when inputting. so we need to disable it in this occurrence.
+TRAPALRM() {
+    # $(git_prompt_info) cost too much time which will raise stutters when inputting. so we need to disable it in this occurence.
     # if [ "$WIDGET" != "expand-or-complete" ] && [ "$WIDGET" != "self-insert" ] && [ "$WIDGET" != "backward-delete-char" ]; then
     # black list will not enum it completely. even some pipe broken will appear.
     # so we just put a white list here.
@@ -208,6 +208,9 @@ TRAPALRM() { # cspell:disable-line
 }
 
 
+NEWLINE=$'\n'
+PROMPT='%n ${NEWLINE} $ '
+
 # prompt
-# PROMPT='$(real_time) $(login_info) $(directory) $(git_status)$(command_status) ';
-PROMPT='$(real_time) $(directory) $(git_status)$(command_status) ';
+PROMPT='$(real_time) $(login_info) $(directory) $(git_status)${NEWLINE}$(command_status) ';
+# PROMPT='$(real_time) $(directory) $(git_status)${NEWLINE}$(command_status) ';
